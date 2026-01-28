@@ -13,6 +13,6 @@
   "description": "",
   "dependencies": {
     "typescript": "^5.9.3",
-    "@repo/typescript-config": "workspace:*"
+    "@repo/typescript-config": "file:../../packages/typescript-config"
   }
 }

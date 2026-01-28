@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ORGANIZER
+}
+
+enum TicketStatus {
+  VALID
+  USED
+}
+
+model User {
+  id            String   @id @default(uuid())
+  walletAddress String   @unique
+  role          Role     @default(USER)
+  createdAt     DateTime @default(now())
+
+  tickets Ticket[]
+  events  Event[]
+
+  @@index([walletAddress])
+}
+
+model Event {
+  id              String   @id @default(uuid())
+  organizerId     String
+  title           String
+  description     String
+  venue           String
+  location        String
+  bannerImage     String? 
+  startTime       DateTime
+  endTime         DateTime
+  category        String
+  contractAddress String?
+  isActive        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organizer User         @relation(fields: [organizerId], references: [id])
+  tiers     TicketTier[]
+  tickets   Ticket[]
+
+  @@index([organizerId])
+  @@index([category])
+  @@index([startTime])
+  @@index([isActive])
+}
+
+model TicketTier {
+  id          String  @id @default(uuid())
+  eventId     String
+  name        String  
+  price       Decimal @db.Decimal(18, 8) 
+  totalSupply Int
+  soldCount   Int     @default(0)
+
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tickets Ticket[]
+
+  @@index([eventId])
+}
+
+model Ticket {
+  id           String       @id @default(uuid())
+  eventId      String
+  tierId       String
+  ownerId      String
+  tokenId      Int
+  status       TicketStatus @default(VALID)
+  qrCodeSecret String       @unique @default(uuid())
+  mintTxHash   String
+  purchasedAt  DateTime     @default(now())
+  usedAt       DateTime?
+  
+  event Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tier  TicketTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  owner User       @relation(fields: [ownerId], references: [id])
+
+  @@unique([eventId, tokenId]) 
+  @@index([ownerId])
+  @@index([eventId])
+  @@index([status])
+}
+

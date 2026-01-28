@@ -1,0 +1,229 @@
+DB----
+
+enum Role { USER, ORGANIZER }
+enum TicketStatus { VALID, USED }
+
+User
+├── id (UUID, PK)
+├── walletAddress (String, unique, lowercase)
+├── role (Role, default USER)
+├── createdAt (DateTime)
+└── Relations: tickets[], events[]
+
+Event
+├── id (UUID, PK)
+├── organizerId (UUID, FK → User)
+├── title (String)
+├── description (String)
+├── venue (String)
+├── location (String)
+├── bannerImage (String, nullable) → "/uploads/events/xyz.jpg"
+├── startTime (DateTime)
+├── endTime (DateTime)
+├── category (String)
+├── contractAddress (String, nullable) → filled after deploy
+├── isActive (Boolean, default false) → true after contract deployed
+├── createdAt (DateTime)
+└── Relations: organizer, tiers[], tickets[]
+
+TicketTier
+├── id (UUID, PK)
+├── eventId (UUID, FK → Event)
+├── name (String) → "General", "VIP"
+├── price (Decimal) → in MATIC (e.g., 0.01)
+├── totalSupply (Int)
+├── soldCount (Int, default 0)
+└── Relations: event, tickets[]
+
+Ticket
+├── id (UUID, PK)
+├── eventId (UUID, FK → Event)
+├── tierId (UUID, FK → TicketTier)
+├── ownerId (UUID, FK → User)
+├── tokenId (Int) → NFT token ID from contract
+├── status (TicketStatus, default VALID)
+├── qrCodeSecret (String, unique) → random UUID for QR signing
+├── mintTxHash (String)
+├── purchasedAt (DateTime)
+├── usedAt (DateTime, nullable)
+└── Relations: event, tier, owner
+
+
+2. Smart Contract
+Create packages/contracts/ with single contract:
+
+State Variables:
+├── organizer (address)
+├── eventId (string) → backend UUID
+├── baseTokenURI (string)
+├── tierPrices (uint256[]) → price per tier in wei
+├── tierSupply (uint256[]) → max tickets per tier
+├── tierMinted (uint256[]) → current minted per tier
+├── ticketTier (mapping tokenId → tierId)
+├── totalMinted (uint256)
+
+Constructor(eventId, name, symbol, tierPrices[], tierSupply[], baseURI):
+├── Sets organizer = msg.sender
+├── Initializes tier arrays
+
+Functions:
+├── mintTicket(tierId) payable → requires msg.value >= tierPrices[tierId], mints NFT, increments counters, emits TicketMinted
+├── getTierInfo(tierId) view → returns (price, supply, minted)
+├── getTicketTier(tokenId) view → returns tierId
+├── withdraw() → only organizer, sends contract balance
+
+Events:
+├── TicketMinted(buyer, tokenId, tierId)
+
+42 x 19
+Plan: EventChain - Decentralized Event Ticketing (Final)
+A simplified blockchain ticketing platform on Polygon Amoy testnet. Organizers deploy contracts from their wallet, images stored locally, no transfers, QR-based entry verification.
+
+1. Database Schema
+Update schema.prisma:
+
+2. Smart Contract
+Create packages/contracts/ with single contract:
+
+EventTicket.sol (ERC-721)
+
+Hardhat Setup:
+
+Network: Polygon Amoy (chainId 80002)
+Compiler: Solidity 0.8.20
+Dependencies: @openzeppelin/contracts (ERC721, Ownable, ReentrancyGuard)
+
+
+Complete User Flows
+A. Organizer Creates Event & Deploys Contract:
+
+Organizer navigates to /organizer/events/new
+Fills form: title, description, venue, dates, uploads banner image
+Adds tiers: name, price (MATIC), supply for each
+Submits → POST /api/events saves to DB, returns eventId
+Page shows "Deploy Contract" button with contract params
+Organizer clicks → frontend calls deployContract() via wagmi:
+Bytecode from compiled EventTicket.sol
+Constructor args: (eventId, name, symbol, tierPrices[], tierSupply[], baseURI)
+Organizer confirms in MetaMask, pays gas (~0.01 MATIC on Amoy)
+Frontend waits for tx receipt → gets contractAddress
+Frontend calls PUT /api/events/:id/activate with contractAddress
+Event now live, visible to users
+B. User Buys Ticket:
+
+User browses /events, clicks event → /events/[id]
+Sees tiers with price & availability
+Clicks "Buy" on desired tier → checks wallet connected
+Frontend reads contract: getTierInfo(tierId) to verify availability
+Frontend calls contract.mintTicket(tierId, { value: tierPrice })
+User confirms in MetaMask
+Frontend waits for tx, extracts tokenId from TicketMinted event
+Frontend calls POST /api/tickets/confirm with { eventId, tierId, txHash, tokenId }
+Backend creates Ticket record with unique qrCodeSecret
+Redirect to /my-tickets/[id]
+
+
+
+
+B. User Buys Ticket:
+
+User browses /events, clicks event → /events/[id]
+Sees tiers with price & availability
+Clicks "Buy" on desired tier → checks wallet connected
+Frontend reads contract: getTierInfo(tierId) to verify availability
+Frontend calls contract.mintTicket(tierId, { value: tierPrice })
+User confirms in MetaMask
+Frontend waits for tx, extracts tokenId from TicketMinted event
+Frontend calls POST /api/tickets/confirm with { eventId, tierId, txHash, tokenId }
+Backend creates Ticket record with unique qrCodeSecret
+Redirect to /my-tickets/[id]
+C. User Shows Ticket at Entry:
+
+User opens /my-tickets/[id]
+Frontend calls GET /api/tickets/:id/qr
+Backend generates QR: { ticketId, timestamp, hash } where hash = HMAC(ticketId + timestamp, qrCodeSecret)
+QR displayed, auto-refreshes every 30 seconds
+Organizer scans with /organizer/events/[id]/scan
+Scanner decodes QR → POST /api/tickets/:id/verify
+Backend validates: hash matches, timestamp < 60s old, status = VALID
+Backend updates ticket status to USED
+Scanner shows green checkmark ✓
+D. Organizer Withdraws Earnings:
+
+Organizer opens /organizer/events/[id]
+Sees total earnings (calculated from tier prices × sold)
+Clicks "Withdraw" → frontend calls contract.withdraw()
+Organizer confirms in MetaMask
+MATIC transferred to organizer wallet
+
+
+
+8. Folder Structure
+
+apps/
+  http-server/
+    uploads/
+      events/           ← banner images saved here
+    src/
+      index.ts          ← Express app setup
+      routes/
+        auth.ts
+        events.ts
+        tickets.ts
+        users.ts
+        organizer.ts
+      middleware/
+        auth.ts         ← JWT verification
+        organizer.ts    ← role check
+      services/
+        qr.ts           ← QR generation & verification
+      lib/
+        prisma.ts       ← Prisma client instance
+
+  frontend/
+    app/
+      layout.tsx        ← Providers (Wagmi, RainbowKit, QueryClient)
+      page.tsx          ← Home
+      events/
+        page.tsx
+        [id]/
+          page.tsx
+      my-tickets/
+        page.tsx
+        [id]/
+          page.tsx
+      organizer/
+        page.tsx
+        events/
+          new/
+            page.tsx
+          [id]/
+            page.tsx
+            scan/
+              page.tsx
+    components/
+      ConnectButton.tsx
+      EventCard.tsx
+      TicketCard.tsx
+      TierSelector.tsx
+      QRDisplay.tsx
+      QRScanner.tsx
+    lib/
+      wagmi.ts          ← Chain config, connectors
+      api.ts            ← Axios instance with auth
+      contracts.ts      ← ABI + bytecode exports
+    hooks/
+      useAuth.ts
+      useTickets.ts
+      useContract.ts
+
+packages/
+  contracts/
+    contracts/
+      EventTicket.sol
+    scripts/
+      deploy.ts         ← For testing, not production
+    test/
+      EventTicket.test.ts
+    hardhat.config.ts
+    artifacts/          ← Compiled ABI + bytecode (copy to frontend)
