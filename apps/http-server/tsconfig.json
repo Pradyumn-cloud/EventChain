@@ -1,7 +1,15 @@
 {
   "compilerOptions": {
     "rootDir": "./src",
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@repo/*": ["../../packages/*/dist/src"]
+    }
   },
-  "extends" : "../../packages/typescript-config/base.json",
+  "extends": "../../packages/typescript-config/base.json"
 }

@@ -1,9 +1,12 @@
 {
   "name": "http-server",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev" : " tsc & node ./dist/index.js"
+    "build": "tsc",
+    "dev": "tsc && node ./dist/index.js",
+    "start": "node ./dist/index.js"
   },
   "keywords": [
     "top"
@@ -12,7 +15,20 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@repo/typescript-config": "file:../../packages/typescript-config",
+    "@repo/db": "file:../../packages/db",
+    "@types/bcrypt": "^6.0.0",
+    "@types/dotenv": "^6.1.1",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "as": "^0.4.1",
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.2.3",
+    "ether": "^0.0.9",
+    "ethers": "^6.13.4",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "typescript": "^5.9.3",
-    "@repo/typescript-config": "file:../../packages/typescript-config"
+    "zod": "^4.3.6"
   }
 }
