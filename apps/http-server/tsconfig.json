@@ -6,10 +6,13 @@
     "module": "NodeNext",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
       "@repo/*": ["../../packages/*/dist/src"]
     }
   },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
   "extends": "../../packages/typescript-config/base.json"
 }

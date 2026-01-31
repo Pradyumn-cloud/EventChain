@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "outDir": "./dist",
+    "declaration": true,
+    "typeRoots": ["./node_modules/@types", "./node_modules/@nomicfoundation/hardhat-toolbox/node_modules/@types"],
+    "types": ["node", "mocha", "chai"]
+  },
+  "include": ["./scripts", "./test", "./hardhat.config.ts", "./typechain-types", "./hardhat.d.ts"],
+  "exclude": ["node_modules"]
+}
