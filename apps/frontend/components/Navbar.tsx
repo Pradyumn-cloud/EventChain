@@ -1,51 +1,78 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { ConnectButton } from '@/components/ConnectButton';
-import { useAuth } from '@/context/AuthContext';
+import Link from "next/link";
+import { ConnectButton } from "@/components/ConnectButton";
+import { useAuth } from "@/context/AuthContext";
+import { Cormorant_Garamond, Outfit } from "next/font/google";
+import { Sparkles } from "lucide-react";
+
+const cormorant = Cormorant_Garamond({
+  weight: ["400", "600", "700"],
+  subsets: ["latin"],
+  style: ["italic", "normal"],
+});
+const outfit = Outfit({ weight: ["300", "400", "500"], subsets: ["latin"] });
 
 export function Navbar() {
   const { user, isAuthenticated, signOut } = useAuth();
 
   return (
-    <nav className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <nav
+      className={`border-b border-white/10 bg-[#070914]/55 backdrop-blur-md sticky top-0 z-50 ${outfit.className}`}
+    >
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex justify-between items-center h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl">🎫</span>
-            <span className="font-bold text-xl bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
-              EventChain
+          <Link
+            href="/"
+            className={`${cormorant.className} text-3xl tracking-wide flex items-center gap-2 text-[#F2E0AE] hover:text-white transition-colors duration-300`}
+          >
+            <Sparkles
+              className="w-5 h-5 text-current opacity-70"
+              strokeWidth={1.5}
+            />
+            <span className="italic">Event</span>Chain
+            <span className="hidden md:inline text-[10px] uppercase tracking-[0.2em] text-white/35 ml-2 font-normal">
+              Protocol
             </span>
           </Link>
 
           {/* Navigation Links */}
-          <div className="hidden md:flex items-center gap-6">
-            <Link href="/events" className="text-gray-300 hover:text-white transition">
-              Events
-            </Link>
+          <div className="hidden md:flex items-center gap-8 text-xs tracking-widest uppercase font-light">
             {isAuthenticated && (
-              <Link href="/dashboard" className="text-gray-300 hover:text-white transition">
+              <Link
+                href="/dashboard"
+                className="text-white/60 hover:text-white transition-colors duration-300"
+              >
                 Dashboard
               </Link>
             )}
-            {user?.role === 'ORGANIZER' && (
-              <Link href="/dashboard/create-event" className="text-gray-300 hover:text-white transition">
+            <Link
+              href="/events"
+              className="text-white/60 hover:text-white transition-colors duration-300"
+            >
+              Events
+            </Link>
+            {user?.role === "ORGANIZER" && (
+              <Link
+                href="/dashboard/create-event"
+                className="text-white/60 hover:text-white transition-colors duration-300"
+              >
                 Create Event
               </Link>
             )}
           </div>
 
           {/* Right Side - Auth */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {isAuthenticated ? (
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-400">
-                  {user?.role === 'ORGANIZER' ? '🎭 Organizer' : '🎟️ User'}
+              <div className="hidden sm:flex items-center gap-3">
+                <span className="text-[11px] tracking-widest uppercase text-white/45 font-light px-3 py-2 border border-white/10 rounded-xl bg-white/[0.03]">
+                  {user?.role === "ORGANIZER" ? "Organizer" : "User"}
                 </span>
                 <button
                   onClick={signOut}
-                  className="px-4 py-2 text-sm bg-gray-800 hover:bg-gray-700 rounded-lg transition"
+                  className="px-4 py-2 rounded-xl text-xs tracking-widest uppercase font-light border border-white/20 bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all duration-300"
                 >
                   Sign Out
                 </button>
@@ -53,7 +80,7 @@ export function Navbar() {
             ) : (
               <Link
                 href="/auth"
-                className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 rounded-lg transition"
+                className="px-4 py-2 rounded-xl text-xs tracking-widest uppercase font-light border border-white/20 bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all duration-300"
               >
                 Sign In
               </Link>
