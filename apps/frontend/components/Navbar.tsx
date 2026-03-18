@@ -39,12 +39,6 @@ export function Navbar() {
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center gap-8 text-xs tracking-widest uppercase font-light">
-            <Link
-              href="/events"
-              className="text-white/60 hover:text-white transition-colors duration-300"
-            >
-              Events
-            </Link>
             {isAuthenticated && (
               <Link
                 href="/dashboard"
@@ -53,6 +47,12 @@ export function Navbar() {
                 Dashboard
               </Link>
             )}
+            <Link
+              href="/events"
+              className="text-white/60 hover:text-white transition-colors duration-300"
+            >
+              Events
+            </Link>
             {user?.role === "ORGANIZER" && (
               <Link
                 href="/dashboard/create-event"
