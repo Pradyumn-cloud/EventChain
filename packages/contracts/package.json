@@ -8,6 +8,7 @@
     "deploy:local": "hardhat run scripts/deploy.ts --network localhost",
     "deploy:amoy": "hardhat run scripts/deploy.ts --network amoy",
     "node": "hardhat node",
+    "dev": "bun run node",
     "clean": "hardhat clean"
   },
   "devDependencies": {

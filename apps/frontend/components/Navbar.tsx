@@ -85,7 +85,6 @@ export function Navbar() {
                 Sign In
               </Link>
             )}
-            <ConnectButton />
           </div>
         </div>
       </div>
