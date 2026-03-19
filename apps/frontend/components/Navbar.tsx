@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { ConnectButton } from "@/components/ConnectButton";
 import { useAuth } from "@/context/AuthContext";
 import { Cormorant_Garamond, Outfit } from "next/font/google";
 import { Sparkles } from "lucide-react";
@@ -67,12 +66,12 @@ export function Navbar() {
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
               <div className="hidden sm:flex items-center gap-3">
-                <span className="text-[11px] tracking-widest uppercase text-white/45 font-light px-3 py-2 border border-white/10 rounded-xl bg-white/[0.03]">
+                <span className="text-[11px] tracking-widest uppercase text-white/45 font-light px-3 py-2 border border-white/10 rounded-xl bg-white/3">
                   {user?.role === "ORGANIZER" ? "Organizer" : "User"}
                 </span>
                 <button
                   onClick={signOut}
-                  className="px-4 py-2 rounded-xl text-xs tracking-widest uppercase font-light border border-white/20 bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all duration-300"
+                  className="px-4 py-2 rounded-xl text-xs tracking-widest uppercase font-light border border-white/20 bg-white/4 text-white/80 hover:text-white hover:bg-white/8 transition-all duration-300"
                 >
                   Sign Out
                 </button>
@@ -80,7 +79,7 @@ export function Navbar() {
             ) : (
               <Link
                 href="/auth"
-                className="px-4 py-2 rounded-xl text-xs tracking-widest uppercase font-light border border-white/20 bg-white/[0.04] text-white/80 hover:text-white hover:bg-white/[0.08] transition-all duration-300"
+                className="px-4 py-2 rounded-xl text-xs tracking-widest uppercase font-light border border-white/20 bg-white/4 text-white/80 hover:text-white hover:bg-white/8 transition-all duration-300"
               >
                 Sign In
               </Link>
