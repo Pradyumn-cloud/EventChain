@@ -10,11 +10,11 @@ const cormorant = Cormorant_Garamond({
 const outfit = Outfit({ weight: ["300", "400", "500"], subsets: ["latin"] });
 
 type Event = {
-  id: number;
+  id: string;
   title: string;
   date: string;
   time: string;
-  location: string;
+  venue: string;
   category: string;
   image: string;
 };
@@ -30,6 +30,13 @@ export function EventCard({ event }: { event: Event }) {
           <img
             src={event.image}
             alt={event.title}
+            onError={(e) => {
+              const img = e.currentTarget;
+              if (img.src.endsWith("/game.png")) {
+                return;
+              }
+              img.src = "/game.png";
+            }}
             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
           />
           <div className="absolute top-4 left-4 z-20 backdrop-blur-md bg-black/40 border border-white/20 px-3 py-1 rounded-full text-[10px] tracking-widest uppercase font-light text-[#F2E0AE]">
@@ -60,7 +67,7 @@ export function EventCard({ event }: { event: Event }) {
 
             <div className="flex items-center gap-3 text-sm text-white/50 font-light tracking-wide">
               <MapPin className="w-4 h-4 text-[#F2E0AE]/70" strokeWidth={1.5} />
-              <span>{event.location}</span>
+              <span>{event.venue}</span>
             </div>
           </div>
 
