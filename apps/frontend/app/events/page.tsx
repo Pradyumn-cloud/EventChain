@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { EventCard } from "@/components/EventCard";
+import { getAllEvents, type Event } from "@/lib/api";
 import { Cormorant_Garamond, Outfit } from "next/font/google";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, Loader2, AlertCircle } from "lucide-react";
 
 const cormorant = Cormorant_Garamond({
   weight: ["400", "600", "700"],
@@ -13,98 +14,62 @@ const cormorant = Cormorant_Garamond({
 });
 const outfit = Outfit({ weight: ["300", "400", "500"], subsets: ["latin"] });
 
+function resolveImageUrl(rawUrl?: string | null): string {
+  if (!rawUrl) {
+    return "/game.png";
+  }
+
+  const trimmed = rawUrl.trim();
+  if (!trimmed) {
+    return "/game.png";
+  }
+
+  if (
+    trimmed.startsWith("data:image/") ||
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("/")
+  ) {
+    return trimmed;
+  }
+
+  return "/game.png";
+}
+
 export default function EventsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
+  const [events, setEvents] = useState<Event[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const events = [
-    {
-      id: 1,
-      title: "Arijit Singh Music Festival",
-      date: "12 July 2026",
-      time: "7:00 PM",
-      location: "Mumbai",
-      category: "Music",
-      schedule: [
-        "Opening Act - 7:00 PM",
-        "Arijit Singh Performance - 8:00 PM",
-        "Special Guest Performance - 9:30 PM",
-        "Closing Ceremony - 10:30 PM",
-      ],
-      image: "/AS.png",
-    },
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getAllEvents();
+        setEvents(data);
+        setError(null);
+      } catch (err: any) {
+        setError(err.message || "Failed to load events");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    {
-      id: 2,
-      title: "Digital Scavenger Hunt",
-      date: "20 August 2026",
-      time: "10:00 AM",
-      location: "Bangalore",
-      category: "Technical",
-      schedule: [
-        "Team Registration - 10:00 AM",
-        "Puzzle Round 1 - 11:00 AM",
-        "City Exploration Challenge - 1:00 PM",
-        "Final Treasure Reveal - 4:00 PM",
-      ],
-      image: "/game.png",
-    },
+    loadEvents();
+  }, []);
 
-    {
-      id: 3,
-      title: "Crypto Sports Meetup",
-      date: "5 September 2026",
-      time: "3:00 PM",
-      location: "Delhi",
-      category: "Sports",
-      schedule: [
-        "Welcome Session - 3:00 PM",
-        "Blockchain in Sports Talk - 4:00 PM",
-        "Panel Discussion - 5:30 PM",
-        "Networking Session - 6:30 PM",
-      ],
-      image: "/market.png",
-    },
-
-    {
-      id: 4,
-      title: "Poetry Slam",
-      date: "15 October 2026",
-      time: "7:00 PM",
-      location: "Ahmedabad",
-      category: "Literary",
-      schedule: [
-        "Poet Registration - 6:30 PM",
-        "Opening Poetry - 7:00 PM",
-        "Main Slam Competition - 8:00 PM",
-        "Winner Announcement - 9:30 PM",
-      ],
-      image: "/poet.png",
-    },
-
-    {
-      id: 5,
-      title: "Tech Workshop",
-      date: "10 December 2026",
-      time: "9:00 AM",
-      location: "Hyderabad",
-      category: "Technical",
-      schedule: [
-        "Workshop Introduction - 9:00 AM",
-        "Blockchain Basics - 10:00 AM",
-        "Hands-on Coding Session - 12:00 PM",
-        "Project Building - 2:00 PM",
-      ],
-      image: "/hackathon.png",
-    },
-  ];
-
-  const filteredEvents = events.filter((event) => {
-    return (
-      event.title.toLowerCase().includes(search.toLowerCase()) &&
-      (category === "" || event.category === category)
-    );
-  });
+  const filteredEvents = useMemo(() => {
+    const now = new Date();
+    return events
+      .filter((event) => new Date(event.endTime) >= now)
+      .filter(
+        (event) =>
+          event.title.toLowerCase().includes(search.toLowerCase()) &&
+          (category === "" || event.category.toLowerCase() === category.toLowerCase())
+      );
+  }, [events, search, category]);
 
   return (
     <div
@@ -160,8 +125,22 @@ export default function EventsPage() {
             </div>
           </div>
 
+          {error && (
+            <div className="max-w-4xl mx-auto mb-8 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-red-400" />
+              <p className="text-red-300 text-sm">{error}</p>
+            </div>
+          )}
+
           {/* Events Grid */}
-          {filteredEvents.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-24 backdrop-blur-xl bg-white/[0.02] border border-white/5 rounded-3xl">
+              <Loader2 className="w-8 h-8 mx-auto text-[#F2E0AE] animate-spin mb-4" />
+              <p className="text-sm tracking-widest uppercase font-light text-white/40">
+                Loading Events
+              </p>
+            </div>
+          ) : filteredEvents.length === 0 ? (
             <div className="text-center py-24 backdrop-blur-xl bg-white/[0.02] border border-white/5 rounded-3xl">
               <h2
                 className={`${cormorant.className} text-4xl text-[#F2E0AE] mb-4 italic`}
@@ -175,7 +154,21 @@ export default function EventsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredEvents.map((event) => (
-                <EventCard key={event.id} event={event} />
+                <EventCard
+                  key={event.id}
+                  event={{
+                    id: event.id,
+                    title: event.title,
+                    date: new Date(event.startTime).toLocaleDateString(),
+                    time: new Date(event.startTime).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }),
+                    venue: event.venue,
+                    category: event.category,
+                    image: resolveImageUrl(event.bannerImage),
+                  }}
+                />
               ))}
             </div>
           )}
