@@ -6,6 +6,7 @@ import eventChainRoute from './events/events.js';
 import authRoute from './auth/auth.js';
 import ticketRoute from './ticket/ticket.js';
 import tiersRoute from './tiers/tiers.js';
+import organizerRoute from './organizer/organizer.js';
 
 const app = express();
 app.use(cors()); // Allow Postman and frontend
@@ -19,6 +20,7 @@ app.use('/events', eventChainRoute);
 app.use('/auth', authRoute);
 app.use('/tickets', ticketRoute);
 app.use('/tiers', tiersRoute);
+app.use('/organizer', organizerRoute);
 
 app.listen(process.env.PORT || 3001 , () => {
   console.log('Server is running on http://localhost:3001');

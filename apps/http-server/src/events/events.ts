@@ -4,14 +4,22 @@ import { authenticatedBro} from "../middleware.js";
 
 const route = Router();
 
-route.get("/",authenticatedBro ,async (req, res) => {
+// Public events feed: only active and not-yet-ended events
+route.get("/", async (req, res) => {
     try
     {
-      /*
-         currectly sharing all events, later we can filter isActive events only
-         -FIX Priyanshu
-      */
-      const events = await prisma.event.findMany();
+            const now = new Date();
+            const events = await prisma.event.findMany({
+                where: {
+                    isActive: true,
+                    endTime: {
+                        gte: now,
+                    },
+                },
+                orderBy: {
+                    startTime: "asc",
+                },
+            });
       res.json(events);
     }
     catch(eror :any)
@@ -21,15 +29,45 @@ route.get("/",authenticatedBro ,async (req, res) => {
     }
 });
 
-route.get("/:id",authenticatedBro ,async(req, res) => {
+// Organizer-only listing for dashboard management
+route.get("/mine", authenticatedBro, async (req, res) => {
+        try {
+                const user = req.user;
+                if (!user || user.role !== "ORGANIZER") {
+                        return res.status(403).send({ error: "Forbidden - Organizer only" });
+                }
+
+                const events = await prisma.event.findMany({
+                    where: {
+                        organizerId: user.id,
+                    },
+                    orderBy: {
+                        createdAt: "desc",
+                    },
+                });
+
+                res.json(events);
+        } catch (error: any) {
+            console.error(error, "In /events/mine GET");
+            res.status(500).send({ error: error.message || "Internal server error" });
+        }
+});
+
+route.get("/:id", async(req, res) => {
     try{
         const {id} = req.params;
+                const now = new Date();
         const event = await prisma.event.findUnique({
-          where : {id : String(id)}
+                    where : {id : String(id)},
         });
         if(!event){
           return  res.status(404).send({error : "Event not found"});
         }
+
+                if (!event.isActive || event.endTime < now) {
+                    return res.status(404).send({ error: "Event not found" });
+                }
+
         res.json(event);
     }catch(error : any){
       console.error(error,"In /events/:id GET");
