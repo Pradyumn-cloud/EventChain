@@ -1,10 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { Navbar } from "@/components/Navbar";
+import {
+  getMyTickets,
+  getOrganizerDashboardStats,
+  type OrganizerDashboardStats,
+  type UserTicket,
+} from "@/lib/api";
 import { Cormorant_Garamond, Outfit } from "next/font/google";
 import {
   Plus,
@@ -100,6 +106,30 @@ export default function DashboardPage() {
 }
 
 function OrganizerDashboard() {
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [stats, setStats] = useState<OrganizerDashboardStats | null>(null);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setIsLoadingStats(true);
+        const token = localStorage.getItem("eventchain_token");
+        if (!token) {
+          return;
+        }
+
+        const organizerStats = await getOrganizerDashboardStats(token);
+        setStats(organizerStats);
+      } catch (error) {
+        console.error("Failed to load organizer stats", error);
+      } finally {
+        setIsLoadingStats(false);
+      }
+    };
+
+    loadStats();
+  }, []);
+
   return (
     <div className="space-y-12">
       {/* Quick Actions */}
@@ -165,10 +195,23 @@ function OrganizerDashboard() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Total Events" value="0" />
-        <StatCard title="Tickets Issued" value="0" />
-        <StatCard title="Revenue" value="0.00" suffix="POL" />
-        <StatCard title="Active Experiences" value="0" />
+        <StatCard
+          title="Total Events"
+          value={isLoadingStats ? "..." : String(stats?.totalEvents ?? 0)}
+        />
+        <StatCard
+          title="Tickets Issued"
+          value={isLoadingStats ? "..." : String(stats?.ticketsIssued ?? 0)}
+        />
+        <StatCard
+          title="Revenue"
+          value={isLoadingStats ? "..." : (stats?.revenue ?? 0).toFixed(2)}
+          suffix="POL"
+        />
+        <StatCard
+          title="Active Experiences"
+          value={isLoadingStats ? "..." : String(stats?.activeExperiences ?? 0)}
+        />
       </div>
 
       {/* Recent Activity */}
@@ -195,6 +238,39 @@ function OrganizerDashboard() {
 }
 
 function UserDashboard() {
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [tickets, setTickets] = useState<UserTicket[]>([]);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setIsLoadingStats(true);
+        const token = localStorage.getItem("eventchain_token");
+        if (!token) {
+          return;
+        }
+
+        const myTickets = await getMyTickets(token);
+        setTickets(myTickets);
+      } catch (error) {
+        console.error("Failed to load ticket stats", error);
+      } finally {
+        setIsLoadingStats(false);
+      }
+    };
+
+    loadStats();
+  }, []);
+
+  const now = new Date();
+  const activeTickets = tickets.filter(
+    (ticket) => ticket.status === "VALID" && new Date(ticket.event.endTime) >= now
+  ).length;
+  const eventsAttended = tickets.filter((ticket) => ticket.status === "USED").length;
+  const upcomingInvites = tickets.filter(
+    (ticket) => new Date(ticket.event.startTime) >= now
+  ).length;
+
   return (
     <div className="space-y-12">
       {/* Quick Actions */}
@@ -260,9 +336,18 @@ function UserDashboard() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard title="Active Tickets" value="0" />
-        <StatCard title="Events Attended" value="0" />
-        <StatCard title="Upcoming Invites" value="0" />
+        <StatCard
+          title="Active Tickets"
+          value={isLoadingStats ? "..." : String(activeTickets)}
+        />
+        <StatCard
+          title="Events Attended"
+          value={isLoadingStats ? "..." : String(eventsAttended)}
+        />
+        <StatCard
+          title="Upcoming Invites"
+          value={isLoadingStats ? "..." : String(upcomingInvites)}
+        />
       </div>
 
       {/* My Tickets */}

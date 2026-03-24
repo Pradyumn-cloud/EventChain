@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
@@ -14,6 +14,8 @@ import {
   Tag,
   Info,
   ShieldAlert,
+  Check,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -24,9 +26,34 @@ const cormorant = Cormorant_Garamond({
 });
 const outfit = Outfit({ weight: ["300", "400", "500"], subsets: ["latin"] });
 
+interface FormData {
+  title: string;
+  description: string;
+  category: string;
+  venue: string;
+  location: string;
+  startTime: string;
+  endTime: string;
+  bannerImage: File | null;
+}
+
 export default function CreateEventPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const [formData, setFormData] = useState<FormData>({
+    title: "",
+    description: "",
+    category: "music",
+    venue: "",
+    location: "",
+    startTime: "",
+    endTime: "",
+    bannerImage: null,
+  });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   // Redirect if not authenticated or not an organizer
   useEffect(() => {
@@ -38,6 +65,124 @@ export default function CreateEventPage() {
       }
     }
   }, [isAuthenticated, isLoading, user, router]);
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // For now, store locally (file will be uploaded to server)
+      setFormData((prev) => ({
+        ...prev,
+        bannerImage: file,
+      }));
+      // Preview image
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const validateForm = (): boolean => {
+    if (
+      !formData.title ||
+      !formData.description ||
+      !formData.venue ||
+      !formData.location ||
+      !formData.startTime ||
+      !formData.endTime
+    ) {
+      setError("All fields are required");
+      return false;
+    }
+
+    const startDate = new Date(formData.startTime);
+    const endDate = new Date(formData.endTime);
+    if (startDate >= endDate) {
+      setError("Event end time must be after start time");
+      return false;
+    }
+
+    if (startDate < new Date()) {
+      setError("Event start time must be in the future");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      // For now, convert image to base64 string (local storage)
+      let bannerImageBase64 = null;
+      if (formData.bannerImage) {
+        bannerImageBase64 = imagePreview; // This is already base64 from preview
+      }
+
+      const token = localStorage.getItem("eventchain_token");
+      if (!token) {
+        setError("Authentication token not found");
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/events`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title: formData.title,
+            description: formData.description,
+            category: formData.category,
+            venue: formData.venue,
+            location: formData.location,
+            startTime: formData.startTime,
+            endTime: formData.endTime,
+            bannerImage: bannerImageBase64, // Send as base64 string
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Failed to create event");
+        return;
+      }
+
+      setSuccess(true);
+      // Redirect to my-events page after 1.5 seconds
+      setTimeout(() => {
+        router.push(`/dashboard/my-events?edit=${data.id}`);
+      }, 1500);
+    } catch (err: any) {
+      setError(err.message || "An error occurred while creating the event");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (isLoading || !user || user.role !== "ORGANIZER") {
     return (
@@ -89,7 +234,23 @@ export default function CreateEventPage() {
               </div>
             </div>
 
-            <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-8" onSubmit={handleSubmit}>
+              {/* Error Alert */}
+              {error && (
+                <div className="backdrop-blur-xl bg-red-500/10 border border-red-500/30 rounded-3xl p-4 flex items-gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                  <p className="text-sm text-red-300">{error}</p>
+                </div>
+              )}
+
+              {/* Success Alert */}
+              {success && (
+                <div className="backdrop-blur-xl bg-green-500/10 border border-green-500/30 rounded-3xl p-4 flex items-gap-3">
+                  <Check className="w-5 h-5 text-green-400 flex-shrink-0" />
+                  <p className="text-sm text-green-300">Event created successfully! Redirecting...</p>
+                </div>
+              )}
+
               {/* Basic Info Section */}
               <div className="backdrop-blur-xl bg-white/[0.02] border border-white/10 rounded-3xl p-8 relative overflow-hidden group">
                 <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#F2E0AE]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -108,6 +269,9 @@ export default function CreateEventPage() {
                     </label>
                     <input
                       type="text"
+                      name="title"
+                      value={formData.title}
+                      onChange={handleInputChange}
                       placeholder="e.g. Symphony of the Void"
                       className="w-full bg-black/20 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:outline-none focus:border-[#F2E0AE]/50 focus:bg-white/[0.02] transition-all font-light tracking-wide text-lg"
                     />
@@ -119,6 +283,9 @@ export default function CreateEventPage() {
                     </label>
                     <textarea
                       rows={4}
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
                       placeholder="Describe the experience..."
                       className="w-full bg-black/20 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:outline-none focus:border-[#F2E0AE]/50 focus:bg-white/[0.02] transition-all font-light tracking-wide resize-none"
                     />
@@ -131,7 +298,12 @@ export default function CreateEventPage() {
                       </label>
                       <div className="relative">
                         <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 z-10" />
-                        <select className="w-full bg-black/20 border border-white/10 rounded-xl pl-12 pr-5 py-4 text-white focus:outline-none focus:border-[#F2E0AE]/50 focus:bg-white/[0.02] transition-all font-light tracking-wide appearance-none cursor-pointer">
+                        <select
+                          name="category"
+                          value={formData.category}
+                          onChange={handleInputChange}
+                          className="w-full bg-black/20 border border-white/10 rounded-xl pl-12 pr-5 py-4 text-white focus:outline-none focus:border-[#F2E0AE]/50 focus:bg-white/[0.02] transition-all font-light tracking-wide appearance-none cursor-pointer"
+                        >
                           <option value="music">Music</option>
                           <option value="sports">Sports</option>
                           <option value="conference">Conference</option>
@@ -145,16 +317,42 @@ export default function CreateEventPage() {
                       <label className="block text-xs tracking-widest uppercase text-white/50 mb-3 ml-1">
                         Visual Asset
                       </label>
-                      <div className="relative flex items-center justify-center w-full bg-black/20 border border-white/10 border-dashed rounded-xl px-5 py-4 text-white hover:border-[#F2E0AE]/50 hover:bg-white/[0.02] transition-all cursor-pointer group/upload">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-                        />
-                        <div className="flex items-center gap-3 text-white/40 group-hover/upload:text-[#F2E0AE] transition-colors font-light text-sm tracking-wide">
-                          <ImageIcon className="w-5 h-5" strokeWidth={1.5} />
-                          <span>Upload Banner Image</span>
-                        </div>
+                      <div className="relative">
+                        {imagePreview ? (
+                          <div className="relative w-full h-32 rounded-xl overflow-hidden border border-white/10">
+                            <img
+                              src={imagePreview}
+                              alt="Banner preview"
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setImagePreview(null);
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  bannerImage: null,
+                                }));
+                              }}
+                              className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-600 rounded-lg p-1 transition"
+                            >
+                              <span className="text-white text-xs">✕</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="relative flex items-center justify-center w-full bg-black/20 border border-white/10 border-dashed rounded-xl px-5 py-4 text-white hover:border-[#F2E0AE]/50 hover:bg-white/[0.02] transition-all cursor-pointer group/upload">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageChange}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                            />
+                            <div className="flex items-center gap-3 text-white/40 group-hover/upload:text-[#F2E0AE] transition-colors font-light text-sm tracking-wide">
+                              <ImageIcon className="w-5 h-5" strokeWidth={1.5} />
+                              <span>Upload Banner Image</span>
+                            </div>
+                          </label>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -183,6 +381,9 @@ export default function CreateEventPage() {
                       </label>
                       <input
                         type="text"
+                        name="venue"
+                        value={formData.venue}
+                        onChange={handleInputChange}
                         placeholder="e.g. Madison Square Garden"
                         className="w-full bg-black/20 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:outline-none focus:border-[#F2E0AE]/50 focus:bg-white/[0.02] transition-all font-light tracking-wide"
                       />
@@ -193,6 +394,9 @@ export default function CreateEventPage() {
                       </label>
                       <input
                         type="text"
+                        name="location"
+                        value={formData.location}
+                        onChange={handleInputChange}
                         placeholder="City, Country"
                         className="w-full bg-black/20 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:outline-none focus:border-[#F2E0AE]/50 focus:bg-white/[0.02] transition-all font-light tracking-wide"
                       />
@@ -208,6 +412,9 @@ export default function CreateEventPage() {
                         <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                         <input
                           type="datetime-local"
+                          name="startTime"
+                          value={formData.startTime}
+                          onChange={handleInputChange}
                           className="w-full bg-black/20 border border-white/10 rounded-xl pl-12 pr-5 py-4 text-white/80 focus:outline-none focus:border-[#F2E0AE]/50 focus:bg-white/[0.02] transition-all font-light tracking-wide [&::-webkit-calendar-picker-indicator]:filter-[invert(1)] [&::-webkit-calendar-picker-indicator]:opacity-50 hover:[&::-webkit-calendar-picker-indicator]:opacity-100"
                         />
                       </div>
@@ -220,6 +427,9 @@ export default function CreateEventPage() {
                         <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                         <input
                           type="datetime-local"
+                          name="endTime"
+                          value={formData.endTime}
+                          onChange={handleInputChange}
                           className="w-full bg-black/20 border border-white/10 rounded-xl pl-12 pr-5 py-4 text-white/80 focus:outline-none focus:border-[#F2E0AE]/50 focus:bg-white/[0.02] transition-all font-light tracking-wide [&::-webkit-calendar-picker-indicator]:filter-[invert(1)] [&::-webkit-calendar-picker-indicator]:opacity-50 hover:[&::-webkit-calendar-picker-indicator]:opacity-100"
                         />
                       </div>
@@ -228,49 +438,55 @@ export default function CreateEventPage() {
                 </div>
               </div>
 
-              {/* Tiers Section */}
+              {/* Info Section */}
               <div className="backdrop-blur-xl bg-white/[0.02] border border-[#F2E0AE]/20 rounded-3xl p-8 relative overflow-hidden group shadow-[0_0_30px_rgba(242,224,174,0.03)]">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                   <h2
                     className={`${cormorant.className} text-3xl text-[#F2E0AE] italic flex items-center gap-3`}
                   >
                     <ShieldAlert className="w-5 h-5" strokeWidth={1.5} />
-                    Access Protocols
+                    Next Steps
                   </h2>
-                  <p className="text-xs tracking-widest uppercase font-light text-white/40 border border-white/10 px-3 py-1 rounded-full bg-white/[0.02]">
-                    Blockchain Registry
-                  </p>
                 </div>
 
-                <div className="p-8 border border-dashed border-[#F2E0AE]/30 rounded-2xl bg-[#F2E0AE]/[0.02] text-center flex flex-col items-center justify-center">
-                  <div className="w-12 h-12 rounded-full border border-[#F2E0AE]/30 bg-[#F2E0AE]/10 flex items-center justify-center mb-4 text-[#F2E0AE]">
-                    <Loader2 className="w-5 h-5 animate-pulse" />
-                  </div>
+                <div className="p-6 border border-dashed border-[#F2E0AE]/30 rounded-2xl bg-[#F2E0AE]/[0.02] text-center flex flex-col items-center justify-center">
                   <p className="text-lg text-white/80 tracking-wide font-light mb-2">
-                    Smart Contract Initialization Pending
+                    Create your event first
                   </p>
                   <p className="text-sm font-light text-white/40 tracking-wide max-w-md">
-                    Ticket tier configuration, capacity limits, and POL pricing
-                    structures will be available once the ledger sync completes.
+                    After creating the event, you'll be able to add ticket tiers, configure pricing, and deploy to the ledger.
                   </p>
                 </div>
               </div>
 
-              {/* Actions - Fixed Bottom Bar on Mobile, Flowing on Desktop */}
+              {/* Actions */}
               <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-white/10">
                 <button
                   type="button"
                   onClick={() => router.back()}
-                  className="px-8 py-4 bg-white/[0.03] border border-white/10 hover:border-white/30 hover:bg-white/[0.06] text-white rounded-xl text-sm tracking-widest uppercase font-medium transition-all duration-300 backdrop-blur-md"
+                  className="px-8 py-4 bg-white/[0.03] border border-white/10 hover:border-white/30 hover:bg-white/[0.06] text-white rounded-xl text-sm tracking-widest uppercase font-medium transition-all duration-300 backdrop-blur-md disabled:opacity-50"
+                  disabled={isSubmitting}
                 >
                   Abort
                 </button>
                 <button
                   type="submit"
-                  disabled
-                  className="flex-1 px-8 py-4 bg-white/10 border border-white/20 text-white/40 rounded-xl text-sm tracking-widest uppercase font-medium transition-all duration-300 backdrop-blur-md cursor-not-allowed"
+                  disabled={isSubmitting || success}
+                  className="flex-1 px-8 py-4 bg-[#F2E0AE]/10 border border-[#F2E0AE]/30 text-[#F2E0AE] hover:bg-[#F2E0AE]/20 rounded-xl text-sm tracking-widest uppercase font-medium transition-all duration-300 backdrop-blur-md disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Deploy to Ledger (Soon)
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Deploying...
+                    </>
+                  ) : success ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Created!
+                    </>
+                  ) : (
+                    "Create Event"
+                  )}
                 </button>
               </div>
             </form>
