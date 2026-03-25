@@ -3,6 +3,7 @@
     "rootDir": ".",
     "outDir": "./dist",
     "module": "NodeNext",
+    "types": ["node"],
     "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "strict": true,
