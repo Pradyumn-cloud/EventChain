@@ -1,6 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-export type Role = 'USER' | 'ORGANIZER';
+export type Role = "USER" | "ORGANIZER";
 
 export interface User {
   id: string;
@@ -18,80 +18,83 @@ export interface AuthResponse {
 }
 
 // Sign up a new user
-export async function signUp(walletAddress: string, role: Role): Promise<AuthResponse> {
+export async function signUp(
+  walletAddress: string,
+  role: Role,
+): Promise<AuthResponse> {
   const response = await fetch(`${API_URL}/auth/sign-up`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({ walletAddress, role }),
   });
-  
+
   const data = await response.json();
-  
+
   if (!response.ok) {
-    throw new Error(data.error || 'Sign up failed');
+    throw new Error(data.error || "Sign up failed");
   }
-  
+
   return data;
 }
 
 // Sign in an existing user
 export async function signIn(walletAddress: string): Promise<AuthResponse> {
   const response = await fetch(`${API_URL}/auth/sign-in`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({ walletAddress }),
   });
-  
+
   const data = await response.json();
-  
+
   if (!response.ok) {
-    throw new Error(data.error || 'Sign in failed');
+    throw new Error(data.error || "Sign in failed");
   }
-  
+
   return data;
 }
 
 // Get current user info using token
 export async function getMe(token: string): Promise<User> {
   const response = await fetch(`${API_URL}/auth/me`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
     },
   });
-  
+
   const data = await response.json();
-  
+
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to get user info');
+    throw new Error(data.error || "Failed to get user info");
   }
-  
+
   return data.user;
 }
 
 // Store token in localStorage
 export function setToken(token: string): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('eventchain_token', token);
+  if (typeof window !== "undefined") {
+    localStorage.setItem("eventchain_token", token);
   }
 }
 
 // Get token from localStorage
 export function getToken(): string | null {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('eventchain_token');
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("eventchain_token");
   }
   return null;
 }
 
-// Remove token from localStorage  
+// Remove token from localStorage
 export function removeToken(): void {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('eventchain_token');
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("eventchain_token");
   }
 }
 
@@ -151,13 +154,13 @@ export async function createEvent(
     endTime: string;
     category: string;
   },
-  token: string
+  token: string,
 ): Promise<Event> {
   const response = await fetch(`${API_URL}/events`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(eventData),
   });
@@ -165,7 +168,7 @@ export async function createEvent(
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to create event');
+    throw new Error(data.error || "Failed to create event");
   }
 
   return data;
@@ -174,16 +177,16 @@ export async function createEvent(
 // Get all events (active ones for users)
 export async function getAllEvents(): Promise<Event[]> {
   const response = await fetch(`${API_URL}/events`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
   });
 
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to fetch events');
+    throw new Error(data.error || "Failed to fetch events");
   }
 
   return Array.isArray(data) ? data : [];
@@ -192,16 +195,16 @@ export async function getAllEvents(): Promise<Event[]> {
 // Get single event by ID
 export async function getEventById(eventId: string): Promise<Event> {
   const response = await fetch(`${API_URL}/events/${eventId}`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
   });
 
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to fetch event');
+    throw new Error(data.error || "Failed to fetch event");
   }
 
   return data;
@@ -210,37 +213,37 @@ export async function getEventById(eventId: string): Promise<Event> {
 // Get organizer's events
 export async function getOrganizerEvents(token: string): Promise<Event[]> {
   const response = await fetch(`${API_URL}/events/mine`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
   });
 
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to fetch organizer events');
+    throw new Error(data.error || "Failed to fetch organizer events");
   }
 
   return Array.isArray(data) ? data : [];
 }
 
 export async function getOrganizerDashboardStats(
-  token: string
+  token: string,
 ): Promise<OrganizerDashboardStats> {
   const response = await fetch(`${API_URL}/organizer/dashboard-stats`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
   });
 
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to fetch organizer dashboard stats');
+    throw new Error(data.error || "Failed to fetch organizer dashboard stats");
   }
 
   return data;
@@ -250,13 +253,13 @@ export async function getOrganizerDashboardStats(
 export async function updateEvent(
   eventId: string,
   eventData: Partial<Event>,
-  token: string
+  token: string,
 ): Promise<Event> {
   const response = await fetch(`${API_URL}/events/${eventId}`, {
-    method: 'PUT',
+    method: "PUT",
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(eventData),
   });
@@ -264,7 +267,7 @@ export async function updateEvent(
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to update event');
+    throw new Error(data.error || "Failed to update event");
   }
 
   return data;
@@ -274,13 +277,13 @@ export async function updateEvent(
 export async function activateEvent(
   eventId: string,
   contractAddress: string,
-  token: string
+  token: string,
 ): Promise<Event> {
   const response = await fetch(`${API_URL}/events/${eventId}/activate`, {
-    method: 'PUT',
+    method: "PUT",
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ contractAddress }),
   });
@@ -288,7 +291,7 @@ export async function activateEvent(
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to activate event');
+    throw new Error(data.error || "Failed to activate event");
   }
 
   return data.event || data;
@@ -299,16 +302,16 @@ export async function activateEvent(
 // Get all tiers for an event
 export async function getEventTiers(eventId: string): Promise<TicketTier[]> {
   const response = await fetch(`${API_URL}/tiers/${eventId}/tiers`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
   });
 
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to fetch tiers');
+    throw new Error(data.error || "Failed to fetch tiers");
   }
 
   return data.tiers || [];
@@ -322,13 +325,13 @@ export async function addTier(
     price: string | number;
     totalSupply: number;
   },
-  token: string
+  token: string,
 ): Promise<TicketTier> {
   const response = await fetch(`${API_URL}/tiers/${eventId}/tiers`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(tierData),
   });
@@ -336,7 +339,7 @@ export async function addTier(
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to add tier');
+    throw new Error(data.error || "Failed to add tier");
   }
 
   return data.tier;
@@ -350,13 +353,13 @@ export async function addBulkTiers(
     price: string | number;
     totalSupply: number;
   }>,
-  token: string
+  token: string,
 ): Promise<TicketTier[]> {
   const response = await fetch(`${API_URL}/tiers/${eventId}/tiers/bulk`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ tiers }),
   });
@@ -364,7 +367,7 @@ export async function addBulkTiers(
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to add tiers');
+    throw new Error(data.error || "Failed to add tiers");
   }
 
   return data.tiers || [];
@@ -373,16 +376,16 @@ export async function addBulkTiers(
 // Delete a tier (organizer only)
 export async function deleteTier(tierId: string, token: string): Promise<void> {
   const response = await fetch(`${API_URL}/tiers/${tierId}`, {
-    method: 'DELETE',
+    method: "DELETE",
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
   });
 
   if (!response.ok) {
     const data = await response.json();
-    throw new Error(data.error || 'Failed to delete tier');
+    throw new Error(data.error || "Failed to delete tier");
   }
 }
 
@@ -394,7 +397,7 @@ export interface UserTicket {
   tierId: string;
   ownerId: string;
   tokenId: number;
-  status: 'VALID' | 'USED';
+  status: "VALID" | "USED";
   mintTxHash: string;
   purchasedAt: string;
   usedAt?: string | null;
@@ -402,20 +405,81 @@ export interface UserTicket {
   tier: TicketTier;
 }
 
+export interface ConfirmTicketInput {
+  eventId: string;
+  tierId: string;
+  txHash: string;
+  tokenId: number;
+}
+
+export interface TicketQrResponse {
+  qrData: string;
+  expiresAt: number;
+  ticket: {
+    id: string;
+    eventTitle: string;
+    venue: string;
+    startTime: string;
+  };
+}
+
 export async function getMyTickets(token: string): Promise<UserTicket[]> {
   const response = await fetch(`${API_URL}/tickets`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
   });
 
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to fetch tickets');
+    throw new Error(data.error || "Failed to fetch tickets");
   }
 
   return data.tickets || [];
+}
+
+export async function confirmTicketPurchase(
+  payload: ConfirmTicketInput,
+  token: string,
+): Promise<UserTicket> {
+  const response = await fetch(`${API_URL}/tickets/confirm`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to confirm ticket purchase");
+  }
+
+  return data.ticket;
+}
+
+export async function getTicketQr(
+  ticketId: string,
+  token: string,
+): Promise<TicketQrResponse> {
+  const response = await fetch(`${API_URL}/tickets/${ticketId}/qr`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to fetch ticket QR");
+  }
+
+  return data;
 }
