@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -11,34 +10,24 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  * Each event deploys its own instance of this contract
  */
 contract EventTicket is ERC721, ERC721URIStorage, ReentrancyGuard {
-    
-    // ============== State Variables ==============
-    
     address public organizer;
-    string public eventId;          // Backend UUID for this event
+    string public eventId;
     string public baseTokenURI;
     
-    uint256[] public tierPrices;    // Price per tier in wei
-    uint256[] public tierSupply;    // Max tickets per tier
-    uint256[] public tierMinted;    // Current minted per tier
+    uint256[] public tierPrices; 
+    uint256[] public tierSupply; 
+    uint256[] public tierMinted;
     
-    mapping(uint256 => uint256) public ticketTier;  // tokenId => tierId
+    mapping(uint256 => uint256) public ticketTier;
     
     uint256 public totalMinted;
-    
-    // ============== Events ==============
-    
     event TicketMinted(address indexed buyer, uint256 indexed tokenId, uint256 indexed tierId);
     event FundsWithdrawn(address indexed organizer, uint256 amount);
-    
-    // ============== Modifiers ==============
     
     modifier onlyOrganizer() {
         require(msg.sender == organizer, "Only organizer can call this");
         _;
     }
-    
-    // ============== Constructor ==============
     
     /**
      * @param _eventId Backend UUID for this event
@@ -62,8 +51,7 @@ contract EventTicket is ERC721, ERC721URIStorage, ReentrancyGuard {
         organizer = msg.sender;
         eventId = _eventId;
         baseTokenURI = _baseURI;
-        
-        // Initialize tier arrays
+
         for (uint256 i = 0; i < _tierPrices.length; i++) {
             tierPrices.push(_tierPrices[i]);
             tierSupply.push(_tierSupply[i]);
@@ -71,7 +59,6 @@ contract EventTicket is ERC721, ERC721URIStorage, ReentrancyGuard {
         }
     }
     
-    // ============== Main Functions ==============
     
     /**
      * @dev Mint a ticket for a specific tier
@@ -81,20 +68,16 @@ contract EventTicket is ERC721, ERC721URIStorage, ReentrancyGuard {
         require(tierId < tierPrices.length, "Invalid tier");
         require(tierMinted[tierId] < tierSupply[tierId], "Tier sold out");
         require(msg.value >= tierPrices[tierId], "Insufficient payment");
-        
-        // Increment counters
+
         totalMinted++;
         tierMinted[tierId]++;
         
-        uint256 tokenId = totalMinted; // Token IDs start from 1
-        
-        // Store tier for this token
+        uint256 tokenId = totalMinted;
+
         ticketTier[tokenId] = tierId;
         
-        // Mint NFT to buyer
         _safeMint(msg.sender, tokenId);
         
-        // Refund excess payment
         if (msg.value > tierPrices[tierId]) {
             uint256 refund = msg.value - tierPrices[tierId];
             (bool success, ) = payable(msg.sender).call{value: refund}("");
@@ -157,7 +140,6 @@ contract EventTicket is ERC721, ERC721URIStorage, ReentrancyGuard {
         return address(this).balance;
     }
     
-    // ============== Override Functions ==============
     
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
         return super.tokenURI(tokenId);

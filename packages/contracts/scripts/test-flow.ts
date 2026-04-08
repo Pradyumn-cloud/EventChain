@@ -1,13 +1,9 @@
 import { ethers } from "hardhat";
 
-/**
- * This script simulates the complete ticket buying flow for testing
- * Run: bunx hardhat run scripts/test-flow.ts --network localhost
- */
 async function main() {
   const [organizer, buyer] = await ethers.getSigners();
 
-  console.log("🎫 EventChain - Full Flow Test\n");
+  console.log(" EventChain - Full Flow Test\n");
   console.log("Organizer:", organizer.address);
   console.log("Buyer:", buyer.address);
   console.log(
@@ -15,14 +11,12 @@ async function main() {
     ethers.formatEther(await ethers.provider.getBalance(buyer.address)),
     "ETH\n",
   );
-
-  // ============== STEP 1: Deploy Contract (Organizer) ==============
-  console.log("📝 STEP 1: Organizer deploys contract...");
+  console.log(" STEP 1: Organizer deploys contract...");
 
   const eventId = "backend-event-uuid-12345";
   const tierPrices = [
-    ethers.parseEther("0.01"), // General
-    ethers.parseEther("0.05"), // VIP
+    ethers.parseEther("0.01"),
+    ethers.parseEther("0.05"),
   ];
   const tierSupply = [100, 20];
 
@@ -38,12 +32,11 @@ async function main() {
   await contract.waitForDeployment();
 
   const contractAddress = await contract.getAddress();
-  console.log("✅ Contract deployed at:", contractAddress);
+  console.log(" Contract deployed at:", contractAddress);
   console.log("   → Now call: PUT /events/" + eventId + "/activate");
   console.log('   → Body: { "contractAddress": "' + contractAddress + '" }\n');
 
-  // ============== STEP 2: Buy Ticket (Buyer) ==============
-  console.log("🎟️  STEP 2: Buyer mints a General ticket (Tier 0)...");
+  console.log(" STEP 2: Buyer mints a General ticket (Tier 0)...");
 
   const tierId = 0;
   const [price] = await contract.getTierInfo(tierId);
@@ -52,10 +45,8 @@ async function main() {
   const tx = await contract.connect(buyer).mintTicket(tierId, { value: price });
   const receipt = await tx.wait();
 
-  // Extract data from transaction
   const txHash = receipt?.hash;
 
-  // Get tokenId from TicketMinted event
   const event = receipt?.logs.find((log) => {
     try {
       const parsed = contract.interface.parseLog({
@@ -74,7 +65,7 @@ async function main() {
   });
   const tokenId = parsedEvent?.args?.tokenId;
 
-  console.log("✅ Ticket minted!");
+  console.log(" Ticket minted!");
   console.log("   → txHash:", txHash);
   console.log("   → tokenId:", tokenId?.toString());
   console.log("   → tierId:", tierId);
@@ -86,8 +77,7 @@ async function main() {
   console.log(`       "tokenId": ${tokenId}`);
   console.log("     }\n");
 
-  // ============== STEP 3: Verify Ownership ==============
-  console.log("🔍 STEP 3: Verifying on-chain data...");
+  console.log("STEP 3: Verifying on-chain data...");
 
   const owner = await contract.ownerOf(tokenId);
   const ticketTier = await contract.getTicketTier(tokenId);
@@ -99,8 +89,7 @@ async function main() {
   console.log("   Total minted:", totalMinted.toString());
   console.log("   Tier 0 minted:", minted.toString());
 
-  // ============== STEP 4: Organizer Withdraws ==============
-  console.log("\n💰 STEP 4: Organizer withdraws earnings...");
+  console.log("\n STEP 4: Organizer withdraws earnings...");
 
   const contractBalance = await contract.getBalance();
   console.log(
@@ -112,14 +101,14 @@ async function main() {
   const withdrawTx = await contract.connect(organizer).withdraw();
   await withdrawTx.wait();
 
-  console.log("✅ Funds withdrawn to organizer!");
+  console.log(" Funds withdrawn to organizer!");
   console.log(
     "   New contract balance:",
     ethers.formatEther(await contract.getBalance()),
     "ETH",
   );
 
-  console.log("\n🎉 Full flow test complete!");
+  console.log("\n Full flow test complete!");
 }
 
 main()

@@ -13,9 +13,7 @@ describe("EventTicket", function () {
   const name = "Test Concert";
   const symbol = "TC";
   const baseURI = "https://api.eventchain.local/metadata/";
-  
-  // Tier 0: General (0.01 ETH, 10 supply)
-  // Tier 1: VIP (0.05 ETH, 5 supply)
+
   const tierPrices = [
     ethers.parseEther("0.01"),
     ethers.parseEther("0.05")
@@ -70,16 +68,13 @@ describe("EventTicket", function () {
       });
       
       const receipt = await tx.wait();
-      
-      // Check token ownership
+
       expect(await eventTicket.ownerOf(1)).to.equal(buyer1.address);
       expect(await eventTicket.totalMinted()).to.equal(1);
-      
-      // Check tier minted count
+
       const [, , minted] = await eventTicket.getTierInfo(0);
       expect(minted).to.equal(1);
-      
-      // Check ticket tier mapping
+
       expect(await eventTicket.getTicketTier(1)).to.equal(0);
     });
 
@@ -90,7 +85,7 @@ describe("EventTicket", function () {
     });
 
     it("Should refund excess payment", async function () {
-      const excessAmount = ethers.parseEther("0.1"); // Pay 0.1 for 0.01 ticket
+      const excessAmount = ethers.parseEther("0.1");
       const balanceBefore = await ethers.provider.getBalance(buyer1.address);
       
       const tx = await eventTicket.connect(buyer1).mintTicket(0, {
@@ -100,8 +95,6 @@ describe("EventTicket", function () {
       const gasUsed = receipt!.gasUsed * receipt!.gasPrice;
       
       const balanceAfter = await ethers.provider.getBalance(buyer1.address);
-      
-      // Balance should decrease by ticket price + gas, not excess amount + gas
       const expectedBalance = balanceBefore - tierPrices[0]! - gasUsed;
       expect(balanceAfter).to.be.closeTo(expectedBalance, ethers.parseEther("0.001"));
     });
@@ -113,12 +106,9 @@ describe("EventTicket", function () {
     });
 
     it("Should fail when tier is sold out", async function () {
-      // Mint all VIP tickets (supply = 5)
       for (let i = 0; i < 5; i++) {
         await eventTicket.connect(buyer1).mintTicket(1, { value: tierPrices[1] });
       }
-      
-      // Try to mint one more
       await expect(
         eventTicket.connect(buyer2).mintTicket(1, { value: tierPrices[1] })
       ).to.be.revertedWith("Tier sold out");
@@ -133,7 +123,6 @@ describe("EventTicket", function () {
 
   describe("Withdrawal", function () {
     beforeEach(async function () {
-      // Mint some tickets to accumulate funds
       await eventTicket.connect(buyer1).mintTicket(0, { value: tierPrices[0] });
       await eventTicket.connect(buyer2).mintTicket(1, { value: tierPrices[1] });
     });
@@ -166,7 +155,7 @@ describe("EventTicket", function () {
     });
 
     it("Should fail when no funds to withdraw", async function () {
-      await eventTicket.connect(organizer).withdraw(); // First withdrawal
+      await eventTicket.connect(organizer).withdraw();
       await expect(
         eventTicket.connect(organizer).withdraw()
       ).to.be.revertedWith("No funds to withdraw");
