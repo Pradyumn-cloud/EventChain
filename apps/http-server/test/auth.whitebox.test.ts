@@ -32,7 +32,11 @@ describe("White-box auth route tests", () => {
 
   it("GET /auth/me returns 404 when decoded user does not exist (covers !user branch)", async () => {
     const token = jwt.sign(
-      { id: "missing-user", walletAddress: "0x0000000000000000000000000000000000000001", role: "USER" },
+      {
+        id: "missing-user",
+        walletAddress: "0x0000000000000000000000000000000000000001",
+        role: "USER",
+      },
       "I want a gf",
       { expiresIn: "1h" },
     );
@@ -53,7 +57,11 @@ describe("White-box auth route tests", () => {
 
   it("GET /auth/me returns 200 for valid token and existing user (covers success branch)", async () => {
     const token = jwt.sign(
-      { id: "u1", walletAddress: "0x0000000000000000000000000000000000000001", role: "USER" },
+      {
+        id: "u1",
+        walletAddress: "0x0000000000000000000000000000000000000001",
+        role: "USER",
+      },
       "I want a gf",
       { expiresIn: "1h" },
     );
@@ -65,7 +73,9 @@ describe("White-box auth route tests", () => {
       createdAt: new Date("2026-01-01T00:00:00.000Z"),
     };
 
-    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(mockedUser as never);
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(
+      mockedUser as never,
+    );
 
     const res = await request(app)
       .get("/auth/me")

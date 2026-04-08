@@ -11,7 +11,7 @@ export function ConnectButton() {
   if (isConnected && address) {
     return (
       <div className="flex  items-center gap-2">
-        <span className="px-3 py-2 bg-white/[0.06] border border-white/15 rounded-xl text-sm tracking-wide text-[#EBE7D8] backdrop-blur-md">
+        <span className="px-3 py-2 bg-white/6 border border-white/15 rounded-xl text-sm tracking-wide text-[#EBE7D8] backdrop-blur-md">
           {address.slice(0, 6)}...{address.slice(-4)}
         </span>
         <button
