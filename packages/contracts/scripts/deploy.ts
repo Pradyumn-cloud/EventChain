@@ -5,24 +5,18 @@ async function main() {
   
   console.log("Deploying contracts with account:", deployer.address);
   console.log("Account balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)), "ETH");
-
-  // Example deployment for testing
-  // In production, these values come from the frontend when organizer creates an event
   
-  const eventId = "test-event-uuid-123"; // Backend event UUID
+  const eventId = "test-event-uuid-123";
   const name = "Test Concert 2026";
   const symbol = "TC2026";
-  
-  // Tier prices in wei (0.01 MATIC, 0.05 MATIC)
+
   const tierPrices = [
-    ethers.parseEther("0.01"),  // General: 0.01 MATIC
-    ethers.parseEther("0.05")   // VIP: 0.05 MATIC
+    ethers.parseEther("0.01"),
+    ethers.parseEther("0.05")
   ];
   
-  // Tier supply
-  const tierSupply = [100, 20]; // 100 General, 20 VIP
-  
-  // Base URI for metadata (can be empty for now)
+  const tierSupply = [100, 20];
+
   const baseURI = "https://api.eventchain.local/metadata/";
 
   console.log("\nDeploying EventTicket contract...");
