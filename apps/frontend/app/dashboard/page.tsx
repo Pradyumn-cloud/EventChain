@@ -15,10 +15,8 @@ import { Cormorant_Garamond, Outfit } from "next/font/google";
 import {
   Plus,
   ListMusic,
-  BarChart3,
   Search,
   Ticket,
-  History,
   Loader2,
 } from "lucide-react";
 
@@ -133,7 +131,7 @@ function OrganizerDashboard() {
   return (
     <div className="space-y-12">
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Link
           href="/dashboard/create-event"
           className="p-8 backdrop-blur-xl bg-white/[0.03] border border-white/10 rounded-3xl hover:bg-[#F2E0AE]/10 hover:border-[#F2E0AE]/40 transition-all duration-500 group relative overflow-hidden"
@@ -169,26 +167,6 @@ function OrganizerDashboard() {
           </h3>
           <p className="text-sm text-white/40 font-light tracking-wide leading-relaxed">
             Manage your curated events and guestlists.
-          </p>
-        </Link>
-
-        <Link
-          href="/dashboard/analytics"
-          className="p-8 backdrop-blur-xl bg-white/[0.02] border border-white/5 rounded-3xl hover:bg-white/[0.05] hover:border-white/20 transition-all duration-500 group"
-        >
-          <div className="w-12 h-12 rounded-full border border-white/10 bg-white/[0.02] flex items-center justify-center mb-6 group-hover:bg-white/10 transition-colors">
-            <BarChart3
-              strokeWidth={1.5}
-              className="w-5 h-5 text-white/60 group-hover:text-white"
-            />
-          </div>
-          <h3
-            className={`${cormorant.className} text-2xl mb-2 tracking-wide text-white/80 group-hover:text-white transition-colors`}
-          >
-            Analytics
-          </h3>
-          <p className="text-sm text-white/40 font-light tracking-wide leading-relaxed">
-            View attendance metrics and revenue insights.
           </p>
         </Link>
       </div>
@@ -274,7 +252,7 @@ function UserDashboard() {
   return (
     <div className="space-y-12">
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Link
           href="/events"
           className="p-8 backdrop-blur-xl bg-white/[0.03] border border-white/10 rounded-3xl hover:bg-[#F2E0AE]/10 hover:border-[#F2E0AE]/40 transition-all duration-500 group relative overflow-hidden"
@@ -310,26 +288,6 @@ function UserDashboard() {
           </h3>
           <p className="text-sm text-white/40 font-light tracking-wide leading-relaxed">
             View and verify your secure NFT event tickets.
-          </p>
-        </Link>
-
-        <Link
-          href="/dashboard/history"
-          className="p-8 backdrop-blur-xl bg-white/[0.02] border border-white/5 rounded-3xl hover:bg-white/[0.05] hover:border-white/20 transition-all duration-500 group"
-        >
-          <div className="w-12 h-12 rounded-full border border-white/10 bg-white/[0.02] flex items-center justify-center mb-6 group-hover:bg-white/10 transition-colors">
-            <History
-              strokeWidth={1.5}
-              className="w-5 h-5 text-white/60 group-hover:text-white"
-            />
-          </div>
-          <h3
-            className={`${cormorant.className} text-2xl mb-2 tracking-wide text-white/80 group-hover:text-white transition-colors`}
-          >
-            Archives
-          </h3>
-          <p className="text-sm text-white/40 font-light tracking-wide leading-relaxed">
-            Browse your history of attended events.
           </p>
         </Link>
       </div>
